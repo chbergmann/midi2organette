@@ -22,7 +22,7 @@ import math
 from instruments import Ariston
 
 def midiNote2str(note):
-    OCTAVE = ['C ','C#','D ','D#','E ','F ','F#','G ','G#','A ','H ','B ']
+    OCTAVE = ['C_','C#','D_','D#','E_','F_','F#','G_','G#','A_','B_','H_']
     return OCTAVE[note % 12] + str(int(note / 12) - 2)
     
 def midiTime2ms(ticks_per_beat, tick):
@@ -99,16 +99,17 @@ def midi2svg(svg_document, organette, parameter):
     millisecs = midiTime2ms(ticks_per_beat, veryend) + parameter.pause
     
     incompat = False 
-    for n in notelist:   
-        if n in organette.tones:
+    for n in notelist:
+        note = n + parameter.transpose
+        if note in organette.tones:
             for t in notelist[n]:
-                if not midiNote2str(n) in parameter.skip:
+                if not midiNote2str(note) in parameter.skip:
                     startangle = midiTime2ms(ticks_per_beat, t['start']) * 2 * math.pi / millisecs
                     endangle = midiTime2ms(ticks_per_beat, t['end']) * 2 * math.pi / millisecs
-                    drawArcHole(svg_document, organette, n, startangle, endangle)
+                    drawArcHole(svg_document, organette, note, startangle, endangle)
         else:
             incompat = True
-       
+  
     if parameter.svgfile != "":
         print('Length: ' + ms2str(millisecs))
  

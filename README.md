@@ -2,6 +2,8 @@
 Create discs for Ariston organettes  
 Music file import in midi format is supported.  
 The output is SVG format. This can be used as input for for lasercutters.
+
+STATE: unfinished !
   
 ![Ariston](http://lot-images.atgmedia.com/SR/35443/2780949/274_468x382.jpg)
 
