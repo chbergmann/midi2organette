@@ -17,8 +17,8 @@ import math
 import svgwrite
 
 class Ariston:
-    radius = 160        #disc radius in 
-    hole_width = 2.5    # width of a pin hole in 
+    radius = 160        # disc radius in mm
+    hole_width = 2.5    # width of a pin hole in mm
     
     # midi notes for each pipe
     tones = [

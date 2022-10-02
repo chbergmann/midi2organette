@@ -21,6 +21,16 @@ import svgwrite
 import math
 from instruments import Ariston
 
+def midiNote2str(note):
+    OCTAVE = ['C ','C#','D ','D#','E ','F ','F#','G ','G#','A ','H ','B ']
+    return OCTAVE[note % 12] + str(int(note / 12) - 2)
+    
+def midiTime2ms(ticks_per_beat, tick):
+    return tick * 250 / ticks_per_beat
+    
+def ms2str(ms):
+    return '{:.0f}:{:02.0f}.{:02.0f}'.format(ms/60000, ms%60000/1000, ms%1000)
+
 def drawArcHole(svg_document, organette, tone, startangle, endangle):
     r = organette.toneToX(tone)
     x = organette.radius + r * math.sin(startangle)
@@ -47,13 +57,124 @@ def CreateTestDisc(svg_document, organette):
         angle2 = 2*math.pi/len(organette.tones) * (i+0.75)
         drawArcHole(svg_document, organette, tone, angle1, angle2)
         i += 1
+
+def extract_midi(svg_document, parameter):
+    mid = mido.MidiFile(parameter.midfile)
+    maxlen = 0
+    notes = {}
+    notelist = {}
+    timestamp = 0
+    for i, track in enumerate(mid.tracks):
+        for msg in track:
+            if msg.type == 'note_on':
+                timestamp += msg.time
+                note = {}
+                note['start'] = timestamp
+                notes[msg.note] = note
+                
+            if msg.type == 'note_off':
+                timestamp += msg.time
+                if parameter.end > 0 and midiTime2ms(mid.ticks_per_beat, timestamp) > parameter.end:
+                    break
+                    
+                if msg.note in notes:
+                    if midiTime2ms(mid.ticks_per_beat, notes[msg.note]['start']) >= parameter.start:
+                        notes[msg.note]['end'] = timestamp
+                        if msg.note in notelist:
+                            notelist[msg.note].append(notes[msg.note])
+                        else:
+                            notelist[msg.note] = [notes[msg.note]]
+                            
+    return (notelist, mid.ticks_per_beat)
+    
+ 
+def midi2svg(svg_document, organette, parameter):
+    (notelist, ticks_per_beat) = extract_midi(svg_document, parameter)          
+    veryend = 0
+    for n in notelist:
+        start = notelist[n][0]['start']
+        end = notelist[n][len(notelist[n])-1]['end']
+        if end > veryend: veryend = end
+    
+    millisecs = midiTime2ms(ticks_per_beat, veryend) + parameter.pause
+    
+    incompat = False 
+    for n in notelist:   
+        if n in organette.tones:
+            for t in notelist[n]:
+                if not midiNote2str(n) in parameter.skip:
+                    startangle = midiTime2ms(ticks_per_beat, t['start']) * 2 * math.pi / millisecs
+                    endangle = midiTime2ms(ticks_per_beat, t['end']) * 2 * math.pi / millisecs
+                    drawArcHole(svg_document, organette, n, startangle, endangle)
+        else:
+            incompat = True
+       
+    if parameter.svgfile != "":
+        print('Length: ' + ms2str(millisecs))
+ 
+        if(incompat):
+            print("Instrument supports and uses:")
+            for t in organette.tones:
+                used = " "
+                if t - parameter.transpose in notelist:
+                    used = "*"
+                print('note {} {}'.format(midiNote2str(t), used))
+                
+        print("\r\nSong contains:")
+        if parameter.transpose != 0:
+            up = 'up'
+            if parameter.transpose < 0: up = 'down'
+            print('transposed {} halftones {}'.format(abs(parameter.transpose), up))
+            
+        sortlist = sorted(notelist)
+        for n in sortlist:
+            start = midiTime2ms(ticks_per_beat, notelist[n][0]['start'])
+            end = midiTime2ms(ticks_per_beat, notelist[n][len(notelist[n])-1]['end'])
+            no = " "
+            if not n + parameter.transpose in organette.tones:
+                no = "X"
+            print('note {} {} time {} - {}'.format(midiNote2str(n + parameter.transpose), no, ms2str(start), ms2str(end)))
         
-        
+ 
+class MyParams:
+    start = 0
+    end = -1
+    midfile = ""
+    svgfile = ""
+    skip = []
+    pause = 0
+    transpose = 0
+    auto = False
+    
+    def __init__(self, argv):
+        last = ""
+        for a in argv:
+            if a == '-auto': self.auto = True
+            if last == '-start': self.start = int(a)
+            elif last == '-end': self.end = int(a)
+            elif last == '-mid': self.midfile = a
+            elif last == '-svg': self.svgfile = a
+            elif last == '-skip': self.skip.append(a)
+            elif last == '-pause': self.pause = int(a)
+            elif last == '-transpose': self.transpose = int(a)
+            last = a
+                    
+          
+parameter = MyParams(sys.argv)      
 organette = Ariston.Ariston()
 diameter = str(organette.radius*2)
-svg_document = svgwrite.Drawing(size = (diameter+'mm', diameter+'mm'), viewBox="0 0 " + diameter + " " + diameter)
+svg_document = svgwrite.Drawing(parameter.svgfile,
+    size = (diameter+'mm', diameter+'mm'), 
+    viewBox="0 0 " + diameter + " " + diameter)
+    
 organette.drawOutlines(svg_document)
-CreateTestDisc(svg_document, organette)
 
-print(svg_document.tostring())
-
+if parameter.midfile == "":
+    CreateTestDisc(svg_document, organette)
+else:
+    midi2svg(svg_document, organette, parameter)  
+    
+if parameter.svgfile == "":
+    print(svg_document.tostring())
+else:
+    svg_document.save()
