@@ -15,14 +15,14 @@ Install Mido and svgwrite
 	pip install svgwrite
 
 ## Usage
-	./midi2organette 
+	./midi2organette.py 
 		-mid <midifile.mid>    input Midi file
 		-svg <svgfile.svg>     output SVG file
 		-start <ms>            skip milliseconds at start
 		-end <ms>              stop after milliseconds
 		-pause <ms>            add milliseconds silence to the end
 		-transpose <halftones> transpose halftones up (negative value for down)
-		-auto                  automatic transpose for my instrument
+		-text <text>           draw text onto the disc
 	
 ### Example
 This will create a disc with the first 45 seconds of mysong.mid with a half second pause at the end. It tries to transpose the song to match all notes that the instrument supports.
@@ -32,6 +32,6 @@ This will create a disc with the first 45 seconds of mysong.mid with a half seco
 ### Test disk
 If the parameter -mid is missing, a test disk will be created
 
-	./midi2organette > testdisk.svg
+	./midi2organette.py -text "Ariston Testscheibe" -svg AristonTestdisk.svg
 
 ![Test disk](examples/AristonTestdisk.svg)

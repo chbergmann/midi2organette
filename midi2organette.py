@@ -100,10 +100,10 @@ def midi2svg(svg_document, organette, parameter):
     
     incompat = False 
     for n in notelist:
-        note = n + parameter.transpose
+        note = midiNote2str(n + parameter.transpose)
         if note in organette.tones:
             for t in notelist[n]:
-                if not midiNote2str(note) in parameter.skip:
+                if not note in parameter.skip:
                     startangle = midiTime2ms(ticks_per_beat, t['start']) * 2 * math.pi / millisecs
                     endangle = midiTime2ms(ticks_per_beat, t['end']) * 2 * math.pi / millisecs
                     drawArcHole(svg_document, organette, note, startangle, endangle)
@@ -117,9 +117,11 @@ def midi2svg(svg_document, organette, parameter):
             print("Instrument supports and uses:")
             for t in organette.tones:
                 used = " "
-                if t - parameter.transpose in notelist:
-                    used = "*"
-                print('note {} {}'.format(midiNote2str(t), used))
+                for n in notelist:
+                    if midiNote2str(n + parameter.transpose) == t:
+                        used = "*"
+                        break
+                print('note {} {}'.format(t, used))
                 
         print("\r\nSong contains:")
         if parameter.transpose != 0:
@@ -132,7 +134,7 @@ def midi2svg(svg_document, organette, parameter):
             start = midiTime2ms(ticks_per_beat, notelist[n][0]['start'])
             end = midiTime2ms(ticks_per_beat, notelist[n][len(notelist[n])-1]['end'])
             no = " "
-            if not n + parameter.transpose in organette.tones:
+            if not midiNote2str(n + parameter.transpose) in organette.tones:
                 no = "X"
             print('note {} {} time {} - {}'.format(midiNote2str(n + parameter.transpose), no, ms2str(start), ms2str(end)))
         
@@ -145,12 +147,11 @@ class MyParams:
     skip = []
     pause = 0
     transpose = 0
-    auto = False
+    text = ""
     
     def __init__(self, argv):
         last = ""
         for a in argv:
-            if a == '-auto': self.auto = True
             if last == '-start': self.start = int(a)
             elif last == '-end': self.end = int(a)
             elif last == '-mid': self.midfile = a
@@ -158,6 +159,7 @@ class MyParams:
             elif last == '-skip': self.skip.append(a)
             elif last == '-pause': self.pause = int(a)
             elif last == '-transpose': self.transpose = int(a)
+            elif last == '-text': self.text = a
             last = a
                     
           
@@ -169,6 +171,7 @@ svg_document = svgwrite.Drawing(parameter.svgfile,
     viewBox="0 0 " + diameter + " " + diameter)
     
 organette.drawOutlines(svg_document)
+organette.drawText(svg_document, parameter.text)
 
 if parameter.midfile == "":
     CreateTestDisc(svg_document, organette)

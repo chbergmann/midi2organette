@@ -21,31 +21,30 @@ class Ariston:
     hole_width = 2.5    # width of a pin hole in mm
     
     # midi notes for each pipe
-    tones = [
-        45,
-        47,
-        50,
-        52,
-        57,
-        59,
-        61,
-        62,
-        64,
-        66,
-        68,
-        69,
-        71,
-        73,
-        74,
-        75,
-        76,
-        78,
-        79,
-        80,
-        81,
-        83,
-        85,
-        86]
+    tones = ['A_1',
+            'H_1',
+            'D_2',
+            'E_2',
+            'A_2',
+            'H_2',
+            'C#3',
+            'D_3',
+            'E_3',
+            'F#3',
+            'G#3',
+            'A_3',
+            'H_3',
+            'C#4',
+            'D_4',
+            'D#4',
+            'E_4',
+            'F#4',
+            'G_4',
+            'G#4',
+            'A_4',
+            'H_4',
+            'C#5',
+            'D_5']
         
     # distance of a pin hole from center in 
     def toneToX(self, tone):
@@ -72,4 +71,13 @@ class Ariston:
         svg_document.add(svg_document.circle(
             center = ('160', '125'), r = '3', stroke='blue', fill='none'))
   
-    
+    # draw text onto the disc
+    # may not be supported by all SVG viewers
+    def drawText(self, svg_document, text):
+        svg_document.add(svg_document.path('M160,215 a55,55 0 1 1 0.1,0', id='MyTextPath', stroke='none', fill='none'))
+        path = svg_document.textPath('#MyTextPath', text, fill='red', stroke='none')
+        svgtxt = svg_document.text("")
+        svgtxt.add(path)
+        svg_document.add(svgtxt)
+
+        
