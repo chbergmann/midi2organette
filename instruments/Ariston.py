@@ -74,8 +74,9 @@ class Ariston:
     # draw text onto the disc
     # may not be supported by all SVG viewers
     def drawText(self, svg_document, text):
+        if(text == ""): return
         svg_document.add(svg_document.path('M160,215 a55,55 0 1 1 0.1,0', id='MyTextPath', stroke='none', fill='none'))
-        path = svg_document.textPath('#MyTextPath', text, fill='red', stroke='none')
+        path = svg_document.textPath('#MyTextPath', text, fill='none', stroke='red', font_size='0.8em')
         svgtxt = svg_document.text("")
         svgtxt.add(path)
         svg_document.add(svgtxt)
