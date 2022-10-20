@@ -29,7 +29,7 @@ def midiTime2ms(ticks_per_beat, tick):
     return tick * 250 / ticks_per_beat
     
 def ms2str(ms):
-    return '{:.0f}:{:02.0f}.{:02.0f}'.format(ms/60000, ms%60000/1000, ms%1000)
+    return '{:.0f}:{:02.0f}.{:02.0f}'.format(math.trunc(ms/60000), math.trunc((ms%60000)/1000), ms%1000)
 
 def drawArcHole(svg_document, organette, tone, startangle, endangle):
     r = organette.toneToX(tone)
@@ -48,14 +48,14 @@ def drawArcHole(svg_document, organette, tone, startangle, endangle):
     path += " A" + str(r2) + "," + str(r2) + " 0 0 1 " + str(x2) + "," + str(y2)
     path += " z"
     
-    svg_document.add(svg_document.path(d = path, stroke='blue', fill='none'))
+    svg_document.add(svg_document.path(d = path, stroke='blue', fill='none', stroke_width='0.2'))
         
 def CreateTestDisc(svg_document, organette): 
     i = 0   
     for tone in organette.tones:
         angle1 = 2*math.pi/len(organette.tones) * i
         angle2 = 2*math.pi/len(organette.tones) * (i+0.75)
-        drawArcHole(svg_document, organette, tone, angle1, angle2)
+        drawArcHole(svg_document, organette, tone, angle1, angle2)   
         i += 1
 
 def extract_midi(svg_document, parameter):
@@ -67,10 +67,12 @@ def extract_midi(svg_document, parameter):
     for i, track in enumerate(mid.tracks):
         for msg in track:
             if msg.type == 'note_on':
-                timestamp += msg.time
-                note = {}
-                note['start'] = timestamp
-                notes[msg.note] = note
+                if not msg.note in notes:
+                    timestamp += msg.time
+                    note = {}
+                    note['start'] = timestamp
+                    note['end'] = -1
+                    notes[msg.note] = note
                 
             if msg.type == 'note_off':
                 timestamp += msg.time
@@ -78,12 +80,14 @@ def extract_midi(svg_document, parameter):
                     break
                     
                 if msg.note in notes:
-                    if midiTime2ms(mid.ticks_per_beat, notes[msg.note]['start']) >= parameter.start:
+                    if notes[msg.note] and midiTime2ms(mid.ticks_per_beat, notes[msg.note]['start']) >= parameter.start:
                         notes[msg.note]['end'] = timestamp
                         if msg.note in notelist:
                             notelist[msg.note].append(notes[msg.note])
                         else:
                             notelist[msg.note] = [notes[msg.note]]
+                            
+                        del notes[msg.note]                                
                             
     return (notelist, mid.ticks_per_beat)
     
@@ -96,19 +100,31 @@ def midi2svg(svg_document, organette, parameter):
         end = notelist[n][len(notelist[n])-1]['end']
         if end > veryend: veryend = end
     
-    millisecs = midiTime2ms(ticks_per_beat, veryend) + parameter.pause
+    millisecs = midiTime2ms(ticks_per_beat, veryend) - parameter.start + parameter.pause
     
     incompat = False 
     for n in notelist:
         note = midiNote2str(n + parameter.transpose)
-        if note in organette.tones:
-            for t in notelist[n]:
+        for i in range(0, len(notelist[n])):
+            t = notelist[n][i]
+            if note in organette.tones:
                 if not note in parameter.skip:
-                    startangle = midiTime2ms(ticks_per_beat, t['start']) * 2 * math.pi / millisecs
-                    endangle = midiTime2ms(ticks_per_beat, t['end']) * 2 * math.pi / millisecs
-                    drawArcHole(svg_document, organette, note, startangle, endangle)
-        else:
-            incompat = True
+                    startangle = (midiTime2ms(ticks_per_beat, t['start']) - parameter.start) * 2 * math.pi / millisecs
+                    endangle = (midiTime2ms(ticks_per_beat, t['end']) - parameter.start) * 2 * math.pi / millisecs
+                    if i < len(notelist[n]) - 1:
+                        tnxt = notelist[n][i+1]
+                        nxtangle = (midiTime2ms(ticks_per_beat, tnxt['start']) - parameter.start) * 2 * math.pi / millisecs
+                        #ensure a minimum gap between 2 notes
+                        if (nxtangle - endangle) < organette.min_angle:
+                            endangle = nxtangle - organette.min_angle
+                        
+                    if endangle - startangle < organette.min_angle:
+                        print("{} skipping {} for {} ms".format(ms2str(midiTime2ms(ticks_per_beat, t['start'])), note, midiTime2ms(ticks_per_beat, t['end'] - t['start'])))
+                    else:
+                        drawArcHole(svg_document, organette, note, startangle, endangle)
+            else:
+                print("{} skipping {} not supported".format(ms2str(midiTime2ms(ticks_per_beat, t['start'])), note))
+                incompat = True
   
     if parameter.svgfile != "":
         print('Length: ' + ms2str(millisecs))

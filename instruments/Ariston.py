@@ -17,66 +17,68 @@ import math
 import svgwrite
 
 class Ariston:
-    radius = 160        # disc radius in mm
+    radius = 165        # disc radius in mm
     hole_width = 2.5    # width of a pin hole in mm
+    min_angle = 0.01    # minimum hole/gap size in radians
     
-    # midi notes for each pipe
-    tones = ['A_1',
-            'H_1',
-            'D_2',
-            'E_2',
-            'A_2',
-            'H_2',
-            'C#3',
-            'D_3',
-            'E_3',
-            'F#3',
-            'G#3',
-            'A_3',
-            'H_3',
-            'C#4',
-            'D_4',
-            'D#4',
-            'E_4',
-            'F#4',
-            'G_4',
-            'G#4',
-            'A_4',
-            'H_4',
-            'C#5',
-            'D_5']
+    # notes for each pipe      
+    tones = [
+        'A_2',
+        'H_2',
+        'D_3',
+        'E_3',
+        'A_3',
+        'H_3',
+        'C#4',
+        'D_4',
+        'E_4',
+        'F#4',
+        'G_4',
+        'A_4',    
+        'H_4',
+        'C_5',
+        'D_5',
+        'D#5',
+        'E_5',
+        'F#5',
+        'G_5',
+        'G#5',
+        'A_5',
+        'H_5',
+        'C#6',
+        'D_6']
         
-    # distance of a pin hole from center in 
+    # distance of a pin hole from center in mm
     def toneToX(self, tone):
         pipe = self.tones.index(tone)
-        return 70 + pipe*3.75
+        return 68 + pipe*3.9
 
     # draw the outer circle, the center hole and the mounting holes
     def drawOutlines(self, svg_document):
         svg_document.add(svg_document.circle(
-            center = ('160', '160'), r = '160', stroke='black', fill='none'))
+            center = (str(self.radius), str(self.radius)), r = str(self.radius), stroke='black', fill='none'))
+            
+        svg_document.add(svg_document.circle(
+            center = (str(self.radius), str(self.radius)), r = '5', stroke='blue', fill='none'))
 
         svg_document.add(svg_document.circle(
-            center = ('160', '160'), r = '5', stroke='blue', fill='none'))
+            center = (str(self.radius + 36.5), str(self.radius)), r = '3', stroke='blue', fill='none'))
 
         svg_document.add(svg_document.circle(
-            center = ('195', '160'), r = '3', stroke='blue', fill='none'))
+            center = (str(self.radius), str(self.radius + 36.5)), r = '3', stroke='blue', fill='none'))
 
         svg_document.add(svg_document.circle(
-            center = ('160', '195'), r = '3', stroke='blue', fill='none'))
+            center = (str(self.radius - 36.5), str(self.radius)), r = '3', stroke='blue', fill='none'))
 
         svg_document.add(svg_document.circle(
-            center = ('125', '160'), r = '3', stroke='blue', fill='none'))
-
-        svg_document.add(svg_document.circle(
-            center = ('160', '125'), r = '3', stroke='blue', fill='none'))
+            center = (str(self.radius), str(self.radius - 36.5)), r = '3', stroke='blue', fill='none'))
   
     # draw text onto the disc
     # may not be supported by all SVG viewers
     def drawText(self, svg_document, text):
         if(text == ""): return
-        svg_document.add(svg_document.path('M160,215 a55,55 0 1 1 0.1,0', id='MyTextPath', stroke='none', fill='none'))
-        path = svg_document.textPath('#MyTextPath', text, fill='none', stroke='red', font_size='0.8em')
+        svg_document.add(svg_document.path('M165,215 a50,50 0 1 1 0.1,0', id='MyTextPath', stroke='none', fill='none'))
+        path = svg_document.textPath('#MyTextPath', text, fill='none', stroke='red', font_size='1em')
         svgtxt = svg_document.text("")
         svgtxt.add(path)
         svg_document.add(svgtxt)
