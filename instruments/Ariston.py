@@ -72,6 +72,11 @@ class Ariston:
 
         svg_document.add(svg_document.circle(
             center = (str(self.radius), str(self.radius - 36.5)), r = '3', stroke='blue', fill='none'))
+            
+        svg_document.add(svg_document.line(
+            start=(self.radius, self.radius + self.toneToX(self.tones[0])), 
+            end = (self.radius, self.radius + self.toneToX(self.tones[len(self.tones)-1])), 
+            stroke='green'))
   
     # draw text onto the disc
     # may not be supported by all SVG viewers

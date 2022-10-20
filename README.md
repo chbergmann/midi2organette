@@ -20,12 +20,14 @@ Install Mido and svgwrite
 		-end <ms>              stop after milliseconds
 		-pause <ms>            add milliseconds silence to the end
 		-transpose <halftones> transpose halftones up (negative value for down)
+		-transpose auto        try to find the best transpose step automatically
 		-text <text>           draw text onto the disc
+		-track <nr>            select a specific track from midi file
 	
 ### Example
 This will create a disc with the first 45 seconds of mysong.mid with a half second pause at the end. It tries to transpose the song to match all notes that the instrument supports.
 
-	./midi2organette -mid mysong.mid -svg disc.svg -end 45000 -pause 500 -auto
+	./midi2organette -mid mysong.mid -svg disc.svg -end 45000 -pause 500 -transpose auto
 
 ### Test disk
 If the parameter -mid is missing, a test disk will be created

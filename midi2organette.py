@@ -65,29 +65,30 @@ def extract_midi(svg_document, parameter):
     notelist = {}
     timestamp = 0
     for i, track in enumerate(mid.tracks):
-        for msg in track:
-            if msg.type == 'note_on':
-                if not msg.note in notes:
-                    timestamp += msg.time
-                    note = {}
-                    note['start'] = timestamp
-                    note['end'] = -1
-                    notes[msg.note] = note
-                
-            if msg.type == 'note_off':
-                timestamp += msg.time
-                if parameter.end > 0 and midiTime2ms(mid.ticks_per_beat, timestamp) > parameter.end:
-                    break
+        if parameter.track < 0 or i == parameter.track:
+            for msg in track:
+                if msg.type == 'note_on':
+                    if not msg.note in notes:
+                        timestamp += msg.time
+                        note = {}
+                        note['start'] = timestamp
+                        note['end'] = -1
+                        notes[msg.note] = note
                     
-                if msg.note in notes:
-                    if notes[msg.note] and midiTime2ms(mid.ticks_per_beat, notes[msg.note]['start']) >= parameter.start:
-                        notes[msg.note]['end'] = timestamp
-                        if msg.note in notelist:
-                            notelist[msg.note].append(notes[msg.note])
-                        else:
-                            notelist[msg.note] = [notes[msg.note]]
-                            
-                        del notes[msg.note]                                
+                if msg.type == 'note_off':
+                    timestamp += msg.time
+                    if parameter.end > 0 and midiTime2ms(mid.ticks_per_beat, timestamp) > parameter.end:
+                        break
+                        
+                    if msg.note in notes:
+                        if notes[msg.note] and midiTime2ms(mid.ticks_per_beat, notes[msg.note]['start']) >= parameter.start:
+                            notes[msg.note]['end'] = timestamp
+                            if msg.note in notelist:
+                                notelist[msg.note].append(notes[msg.note])
+                            else:
+                                notelist[msg.note] = [notes[msg.note]]
+                                
+                            del notes[msg.note]                                
                             
     return (notelist, mid.ticks_per_beat)
     
@@ -102,7 +103,10 @@ def midi2svg(svg_document, organette, parameter):
     
     millisecs = midiTime2ms(ticks_per_beat, veryend) - parameter.start + parameter.pause
     
-    incompat = False 
+    if parameter.auto:
+        autotranspose(parameter, notelist, organette)
+    
+    incompat = False
     for n in notelist:
         note = midiNote2str(n + parameter.transpose)
         for i in range(0, len(notelist[n])):
@@ -154,6 +158,21 @@ def midi2svg(svg_document, organette, parameter):
                 no = "X"
             print('note {} {} time {} - {}'.format(midiNote2str(n + parameter.transpose), no, ms2str(start), ms2str(end)))
         
+        
+def autotranspose(parameter, notelist, organette):
+    best = 999
+    for transpose in range(-48, 48):
+        incompat = 0 
+    
+        for n in notelist:
+            note = midiNote2str(n + transpose)
+            if not note in organette.tones:
+                incompat += 1
+                
+        if incompat < best:
+            best = incompat
+            parameter.transpose = transpose
+            
  
 class MyParams:
     start = 0
@@ -164,6 +183,8 @@ class MyParams:
     pause = 0
     transpose = 0
     text = ""
+    track = -1
+    auto = False
     
     def __init__(self, argv):
         last = ""
@@ -174,8 +195,11 @@ class MyParams:
             elif last == '-svg': self.svgfile = a
             elif last == '-skip': self.skip.append(a)
             elif last == '-pause': self.pause = int(a)
-            elif last == '-transpose': self.transpose = int(a)
+            elif last == '-transpose': 
+                if a == "auto": self.auto = True
+                else: self.transpose = int(a)
             elif last == '-text': self.text = a
+            elif last == '-track': self.track = int(a)
             last = a
                     
           
