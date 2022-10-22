@@ -65,9 +65,10 @@ def extract_midi(svg_document, parameter):
     notelist = {}
     timestamp = 0
     for i, track in enumerate(mid.tracks):
+        timestamp = 0
         if parameter.track < 0 or i == parameter.track:
             for msg in track:
-                if msg.type == 'note_on':
+                if msg.type == 'note_on' and msg.velocity > 0:
                     if not msg.note in notes:
                         timestamp += msg.time
                         note = {}
@@ -75,7 +76,7 @@ def extract_midi(svg_document, parameter):
                         note['end'] = -1
                         notes[msg.note] = note
                     
-                if msg.type == 'note_off':
+                if msg.type == 'note_off' or (msg.type == 'note_on' and msg.velocity == 0):
                     timestamp += msg.time
                     if parameter.end > 0 and midiTime2ms(mid.ticks_per_beat, timestamp) > parameter.end:
                         break
@@ -123,7 +124,7 @@ def midi2svg(svg_document, organette, parameter):
                             endangle = nxtangle - organette.min_angle
                         
                     if endangle - startangle < organette.min_angle:
-                        print("{} skipping {} for {} ms".format(ms2str(midiTime2ms(ticks_per_beat, t['start'])), note, midiTime2ms(ticks_per_beat, t['end'] - t['start'])))
+                        print("{} skipping {} too short {} ms".format(ms2str(midiTime2ms(ticks_per_beat, t['start'])), note, midiTime2ms(ticks_per_beat, t['end'] - t['start'])))
                     else:
                         drawArcHole(svg_document, organette, note, startangle, endangle)
             else:
