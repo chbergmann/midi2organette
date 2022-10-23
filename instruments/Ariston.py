@@ -19,7 +19,7 @@ import svgwrite
 class Ariston:
     radius = 165        # disc radius in mm
     hole_width = 2.5    # width of a pin hole in mm
-    min_angle = 0.01    # minimum hole/gap size in radians
+    min_angle = 0.02    # minimum hole/gap size in radians
     
     # notes for each pipe      
     tones = [
@@ -36,7 +36,7 @@ class Ariston:
         'G_4',
         'A_4',    
         'H_4',
-        'C_5',
+        'C#5',
         'D_5',
         'D#5',
         'E_5',
