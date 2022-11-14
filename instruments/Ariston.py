@@ -1,4 +1,4 @@
-# Copyright (C) 2022 Christian Bergman
+# Copyright (C) 2022 Christian Bergmann
 #
 #   This program is free software: you can redistribute it and/or modify
 #   it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@ import svgwrite
 class Ariston:
     radius = 165        # disc radius in mm
     hole_width = 2.5    # width of a pin hole in mm
-    min_angle = 0.02    # minimum hole/gap size in radians
+    min_angle = 0.011    # minimum hole/gap size in radians
     
     # notes for each pipe      
     tones = [

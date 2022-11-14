@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Copyright (C) 2022 Christian Bergmann
 #
@@ -68,16 +68,15 @@ def extract_midi(svg_document, parameter):
         timestamp = 0
         if parameter.track < 0 or i == parameter.track:
             for msg in track:
+                timestamp += msg.time
                 if msg.type == 'note_on' and msg.velocity > 0:
                     if not msg.note in notes:
-                        timestamp += msg.time
                         note = {}
                         note['start'] = timestamp
                         note['end'] = -1
                         notes[msg.note] = note
                     
                 if msg.type == 'note_off' or (msg.type == 'note_on' and msg.velocity == 0):
-                    timestamp += msg.time
                     if parameter.end > 0 and midiTime2ms(mid.ticks_per_beat, timestamp) > parameter.end:
                         break
                         
